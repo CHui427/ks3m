@@ -3,139 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MathPro | KS3 Advanced</title>
+    <title>MathPro | Academic Excellence</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #FFF; color: #333; }
+        body { font-family: 'Inter', sans-serif; background: #FFF; color: #333; overflow-x: hidden; }
         .accent-orange { color: #FF8C00; }
         .bg-orange { background-color: #FF8C00; }
-        .bg-grey { background-color: #F5F5F5; }
-        details summary::-webkit-details-marker { display:none; }
+        .bg-grey { background-color: #F8F8F8; }
+        .sidebar { transition: transform 0.3s ease; transform: translateX(-100%); }
+        .sidebar.active { transform: translateX(0); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <div id="login-screen" class="flex-grow flex items-center justify-center p-6">
-        <div class="max-w-md w-full bg-grey p-10 rounded-xl border border-gray-200 shadow-sm">
+    <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-50 p-6">
+        <div class="flex justify-between items-center mb-10">
+            <span class="font-black text-2xl">Menu</span>
+            <button onclick="toggleMenu()" class="text-2xl">&times;</button>
+        </div>
+        <nav class="space-y-4">
+            <button onclick="showView('dashboard')" class="w-full text-left p-3 hover:bg-grey rounded-lg font-bold">🏠 Dashboard</button>
+            <button onclick="showView('create-test')" class="w-full text-left p-3 hover:bg-grey rounded-lg font-bold">📝 Create New Test</button>
+            <button onclick="showView('my-tests')" class="w-full text-left p-3 hover:bg-grey rounded-lg font-bold">📂 My Test History</button>
+            <hr>
+            <button onclick="showAdmin()" class="w-full text-left p-3 hover:bg-orange/10 text-orange-600 rounded-lg font-bold">⚙️ Admin Panel</button>
+        </nav>
+    </div>
+
+    <div id="login-screen" class="flex-grow flex items-center justify-center p-6 bg-grey">
+        <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
             <h1 class="text-4xl font-black mb-8 text-center tracking-tight">Math<span class="accent-orange">Pro</span></h1>
-            <input type="text" id="username" placeholder="Student Name" class="w-full p-4 mb-4 border rounded-lg focus:ring-2 focus:ring-orange-400 outline-none">
-            <input type="password" id="password" placeholder="Access Code" class="w-full p-4 mb-6 border rounded-lg focus:ring-2 focus:ring-orange-400 outline-none">
-            <button onclick="handleLogin()" class="w-full bg-orange text-white font-bold py-4 rounded-lg hover:brightness-110 transition">Enter Portal</button>
-            <p id="login-error" class="text-red-500 mt-4 text-center text-sm hidden">Invalid Credentials (admin/1234)</p>
+            <input type="text" id="username" placeholder="Login Name" class="w-full p-4 mb-4 border rounded-xl outline-none focus:ring-2 focus:ring-orange-400">
+            <input type="password" id="password" placeholder="Password" class="w-full p-4 mb-6 border rounded-xl outline-none focus:ring-2 focus:ring-orange-400">
+            <button onclick="handleLogin()" class="w-full bg-orange text-white font-bold py-4 rounded-xl shadow-lg hover:brightness-110 transition">Sign In</button>
+            <p id="login-error" class="text-red-500 mt-4 text-center text-sm hidden">Invalid Credentials.</p>
         </div>
     </div>
 
     <div id="app-screen" class="hidden flex-grow flex flex-col">
-        <nav class="p-6 border-b flex justify-between items-center bg-white sticky top-0 z-20 shadow-sm">
-            <span class="font-black text-2xl tracking-tighter">Math<span class="accent-orange">Pro</span></span>
+        <nav class="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-40">
             <div class="flex items-center gap-4">
-                <button onclick="showAdmin()" class="text-gray-400 hover:text-orange-500 transition font-bold">⚙️ Admin</button>
-                <button onclick="logout()" class="text-red-500 font-bold border-l pl-4 ml-2">Logout</button>
+                <button onclick="toggleMenu()" class="font-black text-2xl tracking-tighter hover:text-orange-500 transition">Math<span class="accent-orange">Pro</span></button>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="user-tag" class="text-sm font-bold bg-grey px-3 py-1 rounded-full"></span>
+                <button onclick="logout()" class="text-red-500 font-bold text-sm">Logout</button>
             </div>
         </nav>
 
-        <main class="max-w-4xl mx-auto w-full p-8">
-            <div id="dashboard" class="mb-10 bg-grey p-6 rounded-2xl border flex flex-col md:flex-row justify-between items-center">
-                <div>
-                    <h2 id="current-topic" class="text-2xl font-black accent-orange uppercase tracking-tight">Loading Topics...</h2>
-                    <p class="text-gray-500">Student: <span id="display-user" class="font-bold text-gray-800"></span></p>
-                </div>
-                <div class="text-center mt-4 md:mt-0">
-                    <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Total Mastery Points</p>
-                    <span id="score" class="text-5xl font-black">0</span>
+        <main id="main-content" class="max-w-4xl mx-auto w-full p-8 flex-grow">
+            <div id="view-dashboard" class="view">
+                <h2 class="text-3xl font-black mb-2">Welcome back!</h2>
+                <p class="text-gray-500 mb-8">Ready to master some advanced mathematics today?</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-orange rounded-2xl text-white shadow-lg cursor-pointer" onclick="showView('create-test')">
+                        <h3 class="text-xl font-bold mb-2">Start a New Test</h3>
+                        <p class="text-sm opacity-80">Customise topics and difficulty levels.</p>
+                    </div>
+                    <div class="p-6 bg-grey rounded-2xl border cursor-pointer" onclick="showView('my-tests')">
+                        <h3 class="text-xl font-bold mb-2">View History</h3>
+                        <p class="text-sm text-gray-500">Track your progress and review old tests.</p>
+                    </div>
                 </div>
             </div>
 
-            <div id="quiz-container" class="space-y-8"></div>
+            <div id="view-create-test" class="view hidden">
+                <h2 class="text-2xl font-black mb-6">Create Custom Test</h2>
+                <div class="space-y-6 bg-grey p-6 rounded-2xl border">
+                    <div>
+                        <label class="block font-bold mb-2">Test Name</label>
+                        <input type="text" id="test-name" class="w-full p-3 border rounded-lg" placeholder="e.g. Weekend Algebra Blast">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-2">Select Topic</label>
+                        <select id="test-topic" class="w-full p-3 border rounded-lg"></select>
+                    </div>
+                    <button onclick="generateTest()" class="w-full bg-black text-white py-4 rounded-xl font-bold">Generate Test Questions</button>
+                </div>
+            </div>
+
+            <div id="view-quiz" class="view hidden">
+                <div class="flex justify-between items-end mb-8 border-b pb-4">
+                    <h2 id="active-test-title" class="text-2xl font-black"></h2>
+                    <span class="text-orange-600 font-black text-xl" id="active-score">Score: 0</span>
+                </div>
+                <div id="quiz-container" class="space-y-10"></div>
+            </div>
+
+            <div id="view-my-tests" class="view hidden">
+                <h2 class="text-2xl font-black mb-6">Test History</h2>
+                <div id="history-list" class="space-y-4"></div>
+            </div>
         </main>
     </div>
 
-    <div id="admin-panel" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
-        <div class="bg-white p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-black">Admin Dashboard</h2>
-                <button onclick="hideAdmin()" class="text-gray-400 hover:text-black text-2xl">×</button>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="space-y-4">
-                    <h3 class="font-bold border-b pb-2">1. Data Management</h3>
-                    <button onclick="exportData()" class="w-full bg-grey py-3 rounded-lg font-bold hover:bg-gray-200 transition">📥 Export Progress & Questions</button>
-                    <div class="border-2 border-dashed p-4 rounded-lg">
-                        <p class="text-xs text-gray-500 mb-2 font-bold uppercase">Import Backup File (.json)</p>
-                        <input type="file" id="import-file" onchange="importFile(event)" class="text-xs">
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <h3 class="font-bold border-b pb-2">2. Curriculum Updates</h3>
-                    <select id="curriculum-topic" class="w-full p-3 border rounded-lg bg-grey">
-                        <option value="Number (FDP, Decimals, Fractions)">Number (FDP, Decimals, Fractions)</option>
-                        <option value="Algebra (Brackets, Equations)">Algebra (Brackets, Equations)</option>
-                        <option value="Geometry (Area, Perimeter, Volume)">Geometry (Area, Perimeter, Volume)</option>
-                        <option value="Ratio & Proportion">Ratio & Proportion</option>
-                        <option value="Probability & Statistics">Probability & Statistics</option>
-                        <option value="KS4 Extension (Advanced)">KS4 Extension (Advanced)</option>
-                    </select>
-                    <textarea id="json-input" class="w-full h-32 p-3 border rounded-lg font-mono text-xs" placeholder='Paste AI JSON here...'></textarea>
-                    <button onclick="saveQuestions()" class="w-full bg-orange text-white py-3 rounded-lg font-bold shadow-lg">Push to Live Platform</button>
-                </div>
+    <div id="admin-panel" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between mb-8">
+                <h2 class="text-3xl font-black">System Administration</h2>
+                <button onclick="hideAdmin()" class="text-4xl">&times;</button>
             </div>
             
-            <div class="mt-8 p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
-                <strong>AI Prompt Tip:</strong> Always ask your AI to use double-backslashes for LaTeX in JSON (e.g., <code>\\text{cm}</code>) to avoid format errors.
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="space-y-4">
+                    <h3 class="font-bold border-b pb-2 uppercase text-xs tracking-widest text-gray-400">User Management</h3>
+                    <div id="admin-user-list" class="space-y-2"></div>
+                    <button onclick="resetUserPassword()" class="text-xs text-orange-600 font-bold underline">Reset 'nnhui' Password</button>
+                </div>
+                <div class="col-span-2 space-y-4">
+                    <h3 class="font-bold border-b pb-2 uppercase text-xs tracking-widest text-gray-400">Add Questions</h3>
+                    <select id="admin-topic-cat" class="w-full p-2 border rounded bg-grey text-sm">
+                        <option value="Algebra">Algebra</option>
+                        <option value="Number">Number</option>
+                        <option value="Geometry">Geometry</option>
+                    </select>
+                    <textarea id="admin-json-input" class="w-full h-40 p-3 border rounded font-mono text-xs" placeholder='Paste JSON here...'></textarea>
+                    <button onclick="addQuestions()" class="w-full bg-orange text-white py-3 rounded-lg font-bold">Import into Database</button>
+                    <div class="flex gap-4">
+                        <button onclick="exportFullData()" class="flex-1 border p-2 rounded text-sm font-bold">📥 Export System</button>
+                        <label class="flex-1 border p-2 rounded text-sm font-bold text-center cursor-pointer">
+                            📤 Import System <input type="file" class="hidden" onchange="importFullData(event)">
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const USERS = { "admin": "1234", "son": "math2026" };
-        let state = {
-            user: "",
-            score: 0,
-            topic: "Getting Started",
+        // CORE STATE
+        let db = JSON.parse(localStorage.getItem('mathpro_db')) || {
+            users: { "admin": "1234", "nnhui": "jacjac" },
             questions: [],
-            history: []
+            history: [],
+            currentUser: null
         };
 
+        function saveDb() { localStorage.setItem('mathpro_db', JSON.stringify(db)); }
+
+        // NAVIGATION
+        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+            if(viewId === 'create-test') populateTopics();
+            if(viewId === 'my-tests') renderHistory();
+            toggleMenu();
+        }
+
+        // LOGIN
         function handleLogin() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-            if(USERS[u] && USERS[u] === p) {
-                state.user = u;
+            if(db.users[u] && db.users[u] === p) {
+                db.currentUser = u;
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('display-user').innerText = u;
-                loadState();
+                document.getElementById('user-tag').innerText = u;
+                showView('dashboard');
             } else { document.getElementById('login-error').classList.remove('hidden'); }
         }
 
-        function render() {
-            document.getElementById('current-topic').innerText = state.topic;
-            document.getElementById('score').innerText = state.score;
-            const container = document.getElementById('quiz-container');
-            
-            if (state.questions.length === 0) {
-                container.innerHTML = `<div class="text-center p-10 bg-grey rounded-xl">No questions loaded. Use Admin to import questions.</div>`;
-                return;
-            }
+        // TEST GENERATION
+        function populateTopics() {
+            const topics = [...new Set(db.questions.map(q => q.topic))];
+            const select = document.getElementById('test-topic');
+            select.innerHTML = topics.map(t => `<option value="${t}">${t}</option>`).join('') || '<option>No questions in DB</option>';
+        }
 
-            container.innerHTML = state.questions.map((q, i) => `
-                <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-                    <div class="flex justify-between mb-4"><span class="text-xs font-black text-orange-500 uppercase tracking-widest">Question ${i+1}</span></div>
-                    <p class="text-xl font-bold mb-8 leading-relaxed">${q.text}</p>
+        function generateTest() {
+            const name = document.getElementById('test-name').value || "Unnamed Test";
+            const topic = document.getElementById('test-topic').value;
+            const filtered = db.questions.filter(q => q.topic === topic);
+            
+            if(filtered.length === 0) return alert("No questions found for this topic.");
+
+            renderQuiz(name, filtered);
+        }
+
+        function renderQuiz(title, qs) {
+            document.getElementById('active-test-title').innerText = title;
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = qs.map((q, i) => `
+                <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-orange"></div>
+                    <p class="text-xl font-bold mb-6">${q.text}</p>
                     <div class="flex flex-wrap gap-4 items-center">
-                        <input type="text" id="ans-${i}" class="border-2 p-4 rounded-xl w-40 focus:border-orange-500 outline-none transition-all" placeholder="Answer">
-                        <button onclick="checkAnswer(${i}, '${q.answer}')" class="bg-black text-white px-8 py-4 rounded-xl font-bold hover:scale-105 transition">Check</button>
-                        <details class="group cursor-pointer">
-                            <summary class="list-none text-gray-400 font-bold hover:text-orange-500 transition text-sm">View Hint</summary>
-                            <div class="mt-4 p-4 bg-orange/5 border-l-4 border-orange rounded text-gray-700 italic">${q.hint}</div>
+                        <input type="text" id="ans-${i}" class="border-2 p-3 rounded-xl w-32 outline-none focus:border-orange-500" placeholder="Answer">
+                        <button onclick="checkAnswer(${i}, '${q.answer}')" class="bg-black text-white px-6 py-3 rounded-xl font-bold">Check</button>
+                        <details class="text-sm font-bold text-gray-400 cursor-pointer">
+                            <summary>Hint</summary>
+                            <div class="mt-2 p-3 bg-grey rounded-lg text-gray-700">${q.hint}</div>
                         </details>
                     </div>
-                    <div id="fb-${i}" class="mt-4 hidden font-black rounded-lg"></div>
+                    <div id="fb-${i}" class="mt-4 font-black hidden"></div>
                 </div>
             `).join('');
+            showView('quiz');
             if(window.MathJax) MathJax.typeset();
         }
 
@@ -143,64 +213,80 @@
             const input = document.getElementById(`ans-${i}`).value.trim();
             const fb = document.getElementById(`fb-${i}`);
             fb.classList.remove('hidden', 'text-green-600', 'text-red-500');
-
             if(input.toLowerCase() === correct.toLowerCase()) {
-                fb.innerText = "✓ Correct! Mastery points added.";
+                fb.innerText = "✓ Correct!";
                 fb.classList.add('text-green-600');
-                state.score += 10;
-                saveState();
             } else {
-                fb.innerText = "✗ Not quite. Keep trying!";
+                fb.innerText = "✗ Incorrect";
                 fb.classList.add('text-red-500');
             }
             fb.classList.remove('hidden');
-            document.getElementById('score').innerText = state.score;
         }
 
-        // State Management
-        function saveState() { localStorage.setItem('math_pro_data', JSON.stringify(state)); }
-        function loadState() {
-            const saved = localStorage.getItem('math_pro_data');
-            if(saved) {
-                state = JSON.parse(saved);
-                render();
+        // ADMIN FUNCTIONS
+        function showAdmin() { document.getElementById('admin-panel').classList.remove('hidden'); renderAdminUsers(); }
+        function hideAdmin() { document.getElementById('admin-panel').classList.add('hidden'); }
+        
+        function renderAdminUsers() {
+            const list = document.getElementById('admin-user-list');
+            list.innerHTML = Object.keys(db.users).map(u => `
+                <div class="flex justify-between items-center p-2 bg-grey rounded text-sm">
+                    <span class="font-bold">${u}</span>
+                    <span class="text-gray-400">••••</span>
+                </div>
+            `).join('');
+        }
+
+        function resetUserPassword() {
+            const newPass = prompt("Enter new password for nnhui:");
+            if(newPass) {
+                db.users["nnhui"] = newPass;
+                saveDb();
+                alert("Password updated!");
             }
         }
 
-        function saveQuestions() {
+        function addQuestions() {
             try {
-                const raw = document.getElementById('json-input').value;
-                state.questions = JSON.parse(raw);
-                state.topic = document.getElementById('curriculum-topic').value;
-                saveState();
-                render();
-                hideAdmin();
-            } catch(e) { alert("Format Error! Ensure you use standard quotes and proper commas."); }
+                const topic = document.getElementById('admin-topic-cat').value;
+                const raw = document.getElementById('admin-json-input').value;
+                // Fix for raw LaTeX backslashes from AI output
+                const cleaned = raw.replace(/\\/g, "\\\\");
+                const newQs = JSON.parse(raw).map(q => ({...q, topic: topic}));
+                db.questions = [...db.questions, ...newQs];
+                saveDb();
+                alert(`Added ${newQs.length} questions to ${topic}!`);
+                document.getElementById('admin-json-input').value = "";
+            } catch(e) { alert("JSON Format Error. Check quotes and commas."); }
         }
 
-        function exportData() {
-            const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
+        function exportFullData() {
+            const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `math_pro_backup_${state.user}.json`;
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mathpro_system_backup.json';
             a.click();
         }
 
-        function importFile(event) {
+        function importFullData(event) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                state = JSON.parse(e.target.result);
-                saveState();
-                render();
-                alert("Data imported successfully!");
+                db = JSON.parse(e.target.result);
+                saveDb();
+                location.reload();
             };
             reader.readAsText(event.target.files[0]);
         }
 
-        function showAdmin() { document.getElementById('admin-panel').classList.remove('hidden'); }
-        function hideAdmin() { document.getElementById('admin-panel').classList.add('hidden'); }
-        function logout() { location.reload(); }
+        function logout() { db.currentUser = null; location.reload(); }
+
+        // Initialize view
+        if(db.currentUser) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('user-tag').innerText = db.currentUser;
+            showView('dashboard');
+        }
     </script>
 </body>
 </html>
