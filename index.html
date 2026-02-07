@@ -1,0 +1,183 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathPro | KS3 Excellence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #FFF; color: #333; }
+        .accent-orange { color: #FF8C00; }
+        .bg-orange { background-color: #FF8C00; }
+        .border-orange { border-color: #FF8C00; }
+        .bg-grey { background-color: #F5F5F5; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="login-screen" class="flex-grow flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-grey p-10 rounded-xl shadow-sm border border-gray-200">
+            <h1 class="text-4xl font-extrabold mb-8 text-center tracking-tight">Math<span class="accent-orange">Pro</span></h1>
+            <input type="text" id="username" placeholder="Student Name" class="w-full p-4 mb-4 border rounded-lg focus:ring-2 focus:ring-orange-400 outline-none">
+            <input type="password" id="password" placeholder="Access Code" class="w-full p-4 mb-6 border rounded-lg focus:ring-2 focus:ring-orange-400 outline-none">
+            <button onclick="handleLogin()" class="w-full bg-orange text-white font-bold py-4 rounded-lg hover:brightness-110 transition shadow-md">Enter Portal</button>
+            <p id="login-error" class="text-red-500 mt-4 text-center text-sm hidden">Access denied. Check credentials.</p>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden flex-grow flex flex-col">
+        <nav class="p-6 border-b flex justify-between items-center bg-white sticky top-0 z-20 shadow-sm">
+            <span class="font-black text-2xl tracking-tighter">Math<span class="accent-orange">Pro</span></span>
+            <div class="flex items-center gap-6">
+                <button onclick="showAdmin()" class="text-gray-400 hover:text-orange-500 font-medium transition">⚙️ Admin</button>
+                <button onclick="logout()" class="text-red-500 font-bold border-l pl-6">Logout</button>
+            </div>
+        </nav>
+
+        <main class="max-w-4xl mx-auto w-full p-8">
+            <div id="header-box" class="mb-10 flex flex-col md:flex-row justify-between items-center bg-grey p-6 rounded-2xl border border-gray-100">
+                <div>
+                    <h2 id="topic-display" class="text-2xl font-bold accent-orange">Select a Topic</h2>
+                    <p class="text-gray-500">Student: <span id="display-user" class="font-bold"></span></p>
+                </div>
+                <div class="mt-4 md:mt-0 text-center">
+                    <p class="text-sm uppercase tracking-widest text-gray-400 font-bold">Total Points</p>
+                    <span id="score" class="text-4xl font-black">0</span>
+                </div>
+            </div>
+
+            <div id="quiz-container" class="space-y-12">
+                </div>
+        </main>
+    </div>
+
+    <div id="admin-panel" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-black">Admin Panel</h2>
+                <button onclick="hideAdmin()" class="text-gray-400 hover:text-black text-2xl">×</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <label class="block font-bold mb-2">1. Select Topic Title</label>
+                    <select id="topic-title" class="w-full p-3 border rounded-lg mb-6 bg-grey">
+                        <option value="Algebra: Equations & Brackets">Algebra: Equations & Brackets</option>
+                        <option value="Number: FDP Mastery">Number: FDP Mastery</option>
+                        <option value="Geometry: Area & Perimeter">Geometry: Area & Perimeter</option>
+                        <option value="Ratio & Proportion">Ratio & Proportion</option>
+                        <option value="Advanced KS4 Extension">Advanced KS4 Extension</option>
+                    </select>
+
+                    <label class="block font-bold mb-2">2. AI Prompt Generator</label>
+                    <div class="p-4 bg-orange/5 border border-orange/20 rounded-lg text-sm mb-4">
+                        <p id="ai-prompt-text" class="italic text-gray-700 select-all cursor-pointer">
+                            "Act as a UK KS3 Maths Teacher. Generate 10 advanced level questions for Year 7 in JSON format: [{"text": "...", "answer": "...", "hint": "..."}]. Topic: Algebra."
+                        </p>
+                    </div>
+                    <button onclick="copyPrompt()" class="text-xs bg-orange text-white px-3 py-1 rounded">Copy Prompt</button>
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-2">3. Import Data (JSON)</label>
+                    <textarea id="json-input" class="w-full h-48 p-4 border rounded-lg font-mono text-xs mb-4" placeholder='Paste JSON here...'></textarea>
+                    <button onclick="importQuestions()" class="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800">Update Platform</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USERS = { "admin": "1234", "son": "math2026" };
+        let quizData = { title: "Getting Started", questions: [] };
+
+        function handleLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if(USERS[u] && USERS[u] === p) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('display-user').innerText = u;
+                init();
+            } else { document.getElementById('login-error').classList.remove('hidden'); }
+        }
+
+        function init() {
+            const saved = localStorage.getItem('math_vault');
+            if(saved) {
+                quizData = JSON.parse(saved);
+                render();
+            }
+        }
+
+        function render() {
+            document.getElementById('topic-display').innerText = quizData.title;
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = quizData.questions.map((q, i) => `
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-xl font-semibold mb-6">${i+1}. ${q.text}</p>
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <input type="text" id="ans-${i}" class="border-2 p-3 rounded-lg w-40 focus:border-orange-400 outline-none" placeholder="Your answer">
+                        <button onclick="checkAnswer(${i}, '${q.answer}')" class="bg-black text-white px-8 py-3 rounded-lg font-bold">Submit</button>
+                        <details class="text-sm text-gray-400 cursor-pointer group">
+                            <summary class="group-hover:text-orange-500 transition">Need a hint?</summary>
+                            <div class="p-4 bg-grey rounded-lg mt-3 border-l-4 border-orange text-gray-700">${q.hint}</div>
+                        </details>
+                    </div>
+                    <div id="feedback-${i}" class="mt-4 hidden p-3 rounded-lg font-bold"></div>
+                </div>
+            `).join('');
+            if(window.MathJax) MathJax.typeset();
+        }
+
+        function checkAnswer(i, correct) {
+            const input = document.getElementById(`ans-${i}`).value.trim();
+            const div = document.getElementById(`feedback-${i}`);
+            div.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+            
+            if(input.toLowerCase() === correct.toLowerCase()) {
+                div.innerText = "Fantastic! That's correct.";
+                div.classList.add('hidden', 'bg-green-100', 'text-green-700');
+                div.classList.remove('hidden');
+                updateScore(10);
+            } else {
+                div.innerText = "Not quite. Check your calculation and try again.";
+                div.classList.add('bg-red-100', 'text-red-700');
+                div.classList.remove('hidden');
+            }
+        }
+
+        function updateScore(p) {
+            let s = parseInt(document.getElementById('score').innerText);
+            document.getElementById('score').innerText = s + p;
+        }
+
+        function importQuestions() {
+            const title = document.getElementById('topic-title').value;
+            const raw = document.getElementById('json-input').value;
+            try {
+                const qs = JSON.parse(raw);
+                quizData = { title: title, questions: qs };
+                localStorage.setItem('math_vault', JSON.stringify(quizData));
+                render();
+                hideAdmin();
+            } catch(e) { alert("Error: Please check your JSON format."); }
+        }
+
+        function copyPrompt() {
+            const t = document.getElementById('topic-title').value;
+            const prompt = `Act as an expert UK Maths Teacher. Generate 10 advanced Year 7 problems (KS3/KS4 level) for the topic "${t}". Format them as a JSON array of objects with "text", "answer", and "hint" keys. Use LaTeX for all math symbols (enclose in $). Output ONLY the JSON code.`;
+            navigator.clipboard.writeText(prompt);
+            alert("Prompt copied to clipboard!");
+        }
+
+        function showAdmin() { document.getElementById('admin-panel').classList.remove('hidden'); }
+        function hideAdmin() { document.getElementById('admin-panel').classList.add('hidden'); }
+        function logout() { location.reload(); }
+    </script>
+</body>
+</html>
